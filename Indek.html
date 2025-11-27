@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NEEROSTORE</title>
+  <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #111;
+      color: #fff;
+    }
+    header {
+      padding: 15px;
+      background: #1c1c1c;
+      text-align: center;
+      font-size: 20px;
+      font-weight: bold;
+    }
+    .container {
+      padding: 10px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 12px;
+    }
+    .card {
+      background: #222;
+      padding: 10px;
+      border-radius: 12px;
+      text-align: center;
+      box-shadow: 0 0 8px #0005;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      overflow: hidden;
+    }
+    .card img {
+      width: 100%;
+      border-radius: 10px;
+      margin-bottom: 8px;
+    }
+    .price, .name-marquee span {
+      font-weight: bold;
+      animation: colorChange 3s infinite alternate;
+    }
+    .name-marquee {
+      white-space: nowrap;
+      display: block;
+      overflow: hidden;
+      position: relative;
+      width: 100%;
+    }
+    .name-marquee span {
+      display: inline-block;
+      padding-left: 100%;
+      animation: marquee 8s linear infinite, colorChange 3s infinite alternate;
+    }
+    @keyframes marquee {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-100%); }
+    }
+    @keyframes colorChange {
+      0% { color: #4caf50; }
+      25% { color: #ffeb3b; }
+      50% { color: #ff5722; }
+      75% { color: #03a9f4; }
+      100% { color: #e91e63; }
+    }
+    button {
+      width: 100%;
+      padding: 8px;
+      border: none;
+      border-radius: 8px;
+      background: #4caf50;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button:active {
+      background: #3a8a40;
+    }
+    input[type='file'], input[type='number'], input[type='text'] {
+      margin-top: 5px;
+      width: 100%;
+      padding: 4px;
+      border-radius: 6px;
+      border: none;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <header>NEERO STORE GAG</header>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const initialGames = [
+      { id: 1, name: "Diamond ML", price: 49000, img: "https://i.imgur.com/fuO5UQv.jpeg" },
+      { id: 2, name: "UC PUBG", price: 55000, img: "https://i.imgur.com/kd2UQ2y.jpeg" },
+      { id: 3, name: "Genesis Crystals", price: 60000, img: "https://i.imgur.com/M8B2mJK.jpeg" },
+      { id: 4, name: "Robux", price: 40000, img: "https://i.imgur.com/YgqJrQe.jpeg" }
+    ];
+
+    function App() {
+      const [games, setGames] = React.useState(() => {
+        const saved = localStorage.getItem('games');
+        return saved ? JSON.parse(saved) : initialGames;
+      });
+      const [cart, setCart] = React.useState([]);
+      const [checkoutOpen, setCheckoutOpen] = React.useState(false);
+
+      function addToCart(game) {
+        setCart([...cart, game]);
+      }
+
+      function removeFromCart(index) {
+        const newCart = [...cart];
+        newCart.splice(index, 1);
+        setCart(newCart);
+      }
+
+      function handleImageChange(event, id) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const updatedGames = games.map(g => g.id === id ? {...g, img: e.target.result} : g);
+          setGames(updatedGames);
+          localStorage.setItem('games', JSON.stringify(updatedGames));
+        };
+        reader.readAsDataURL(file);
+      }
+
+      function handlePriceChange(event, id) {
+        const newPrice = parseInt(event.target.value) || 0;
+        const updatedGames = games.map(g => g.id === id ? {...g, price: newPrice} : g);
+        setGames(updatedGames);
+        localStorage.setItem('games', JSON.stringify(updatedGames));
+      }
+
+      function handleNameChange(event, id) {
+        const newName = event.target.value;
+        const updatedGames = games.map(g => g.id === id ? {...g, name: newName} : g);
+        setGames(updatedGames);
+        localStorage.setItem('games', JSON.stringify(updatedGames));
+      }
+
+      function totalPrice() {
+        return cart.reduce((t, g) => t + g.price, 0).toLocaleString('id-ID');
+      }
+
+      return (
+        <div>
+          <div className="container">
+            {games.map(game => (
+              <div key={game.id} className="card">
+                <img src={game.img} alt={game.name} />
+                <div className="name-marquee"><span>{game.name}</span></div>
+                <input type="text" value={game.name} onChange={e => handleNameChange(e, game.id)} />
+                <div className="price">Rp {game.price.toLocaleString('id-ID')}</div>
+                <input type="number" value={game.price} onChange={e => handlePriceChange(e, game.id)} />
+                <input type="file" accept="image/*" onChange={e => handleImageChange(e, game.id)} />
+                <button onClick={() => addToCart(game)}>Add to Cart</button>
+              </div>
+            ))}
+          </div>
+
+          <button
+            style={{
+              position: 'fixed',
+              bottom: '20px',
+              right: '20px',
+              background: '#ff9800',
+              padding: '12px 16px',
+              borderRadius: '50px',
+              border: 'none',
+              fontWeight: 'bold',
+              boxShadow: '0 0 10px #0006',
+            }}
+            onClick={() => setCheckoutOpen(true)}
+          >
+            Cart ({cart.length})
+          </button>
+
+          {checkoutOpen && (
+            <div style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              background: '#000a',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center'
+            }}>
+              <div style={{ background: '#222', padding: '20px', borderRadius: '12px', width: '85%' }}>
+                <h2>Checkout</h2>
+
+                {cart.length === 0 ? (
+                  <p>Your cart is empty.</p>
+                ) : (
+                  <ul>
+                    {cart.map((item, i) => (
+                      <li key={i} style={{ marginBottom: '8px' }}>
+                        {item.name} - Rp {item.price.toLocaleString('id-ID')}
+                        <button style={{ marginLeft: '10px', background: '#e53935' }} onClick={() => removeFromCart(i)}>Remove</button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+
+                <h3>Total: Rp {totalPrice()}</h3>
+
+                <div style={{marginTop: '15px'}}>
+                  <p>Silakan transfer ke salah satu rekening berikut:</p>
+                  <ul>
+                    <li>JIKA SUDAH TRANFER SILAKAN PM TIKTOK antifriendlyyy</li>
+                    
+                    <li>DANA: 081654983537</li>
+                  </ul>
+                </div>
+
+                <button style={{ marginTop: '10px', width: '100%' }} onClick={() => alert('Order submitted! Silakan bayar sesuai instruksi.')}>Confirm Order</button>
+                <button style={{ marginTop: '10px', width: '100%', background: '#444' }} onClick={() => setCheckoutOpen(false)}>Close</button>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    ReactDOM.render(<App />, document.getElementById("root"));
+  </script>
+</body>
+</html>
